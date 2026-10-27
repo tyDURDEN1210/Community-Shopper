@@ -15,11 +15,12 @@ import { AppError } from '../utils/errors.js';
 
 function setAuthCookies(res: Response, token: string, csrfToken: string): void {
   const maxAgeMs = 7 * 24 * 60 * 60 * 1000;
+  const sameSite = env.COOKIE_SAME_SITE;
 
   res.cookie('cc_token', token, {
     httpOnly: true,
     secure: env.COOKIE_SECURE,
-    sameSite: env.COOKIE_SECURE ? 'none' : 'lax',
+    sameSite,
     maxAge: maxAgeMs,
     path: '/'
   });
@@ -27,7 +28,7 @@ function setAuthCookies(res: Response, token: string, csrfToken: string): void {
   res.cookie('cc_csrf', csrfToken, {
     httpOnly: false,
     secure: env.COOKIE_SECURE,
-    sameSite: env.COOKIE_SECURE ? 'none' : 'lax',
+    sameSite,
     maxAge: maxAgeMs,
     path: '/'
   });
@@ -85,8 +86,19 @@ export async function logoutHandler(
   next: NextFunction
 ): Promise<void> {
   try {
-    res.clearCookie('cc_token', { path: '/' });
-    res.clearCookie('cc_csrf', { path: '/' });
+    const sameSite = env.COOKIE_SAME_SITE;
+    res.clearCookie('cc_token', {
+      httpOnly: true,
+      secure: env.COOKIE_SECURE,
+      sameSite,
+      path: '/'
+    });
+    res.clearCookie('cc_csrf', {
+      httpOnly: false,
+      secure: env.COOKIE_SECURE,
+      sameSite,
+      path: '/'
+    });
     res.status(200).json({
       success: true,
       data: { message: 'Logged out successfully' }
@@ -134,4 +146,3 @@ export async function updateMeHandler(
     next(err);
   }
 }
-

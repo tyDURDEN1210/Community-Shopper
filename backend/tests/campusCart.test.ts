@@ -722,5 +722,21 @@ describe('Campus Cart Backend API & Transactional Approval Suite', () => {
       .set('Authorization', `Bearer ${initiator.token}`);
     expect(notFoundRes.status).toBe(404);
   });
+
+  it('16. Serves SPA index.html for client routes while preserving JSON 404 for unknown /api routes', async () => {
+    const unknownApiV1 = await request(app).get('/api/v1/nonexistent-endpoint');
+    expect(unknownApiV1.status).toBe(404);
+    expect(unknownApiV1.body.success).toBe(false);
+    expect(unknownApiV1.body.error.code).toBe('ROUTE_NOT_FOUND');
+
+    const unknownApiRoot = await request(app).get('/api/unknown');
+    expect(unknownApiRoot.status).toBe(404);
+    expect(unknownApiRoot.body.success).toBe(false);
+
+    // Client route fallback serves HTML when frontend/dist/index.html is built
+    const spaRouteRes = await request(app).get('/orders/some-client-route');
+    expect(spaRouteRes.status).toBe(200);
+    expect(spaRouteRes.headers['content-type']).toMatch(/text\/html/);
+  });
 });
 

@@ -220,18 +220,28 @@ npm run build
 
 ---
 
-## 9. Deployment Instructions
+## 9. Deployment Instructions (Single Render Web Service)
+
+Campus Cart is configured to deploy as **one unified Render Web Service** from the repository root. Express serves both the `/api/v1` REST API, `/socket.io` WebSocket server, and the compiled React/Vite production SPA (`frontend/dist`) with a safe SPA fallback.
 
 1. **Database (MongoDB Atlas)**:
-   - Create an M0 (or higher) cluster on MongoDB Atlas (Atlas clusters are configured as a 3-node replica set by default, supporting multi-document transactions out of the box).
-   - Whitelist your backend host IP and copy the `mongodb+srv://...` connection string.
-2. **Backend (Render)**:
-   - Connect this repository to Render using `render.yaml` or create a Web Service with Root Directory `backend`, Build Command `npm install && npm run build`, and Start Command `npm run start`.
-   - Configure `MONGODB_URI`, `JWT_SECRET`, `COOKIE_SECURE=true`, and `CORS_ORIGIN=https://your-frontend.vercel.app`.
-3. **Frontend (Vercel)**:
-   - Import the repository in Vercel with Root Directory set to `frontend`.
-   - Set environment variables `VITE_API_BASE_URL=https://your-backend.onrender.com/api/v1` and `VITE_SOCKET_URL=https://your-backend.onrender.com`.
-   - Deploy (`frontend/vercel.json` handles SPA client-side routing automatically).
+   - Create an M0 (or higher) cluster on MongoDB Atlas (Atlas clusters run as a 3-node replica set by default, supporting multi-document ACID transactions out of the box).
+   - Under **Network Access**, allow access from Render (`0.0.0.0/0` or Render's outbound IPs).
+   - Copy your `mongodb+srv://...` connection string.
+2. **Render Web Service Configuration**:
+   - Connect your GitHub repository to Render (either via **New -> Blueprint** using `render.yaml` or **New -> Web Service**):
+     - **Root Directory**: *(leave empty / repository root)*
+     - **Runtime**: `Node`
+     - **Build Command**: `npm run install:all && npm run build`
+     - **Start Command**: `npm run start`
+     - **Health Check Path**: `/api/v1/health`
+   - **Environment Variables on Render**:
+     - `NODE_ENV` = `production`
+     - `MONGODB_URI` = `mongodb+srv://<user>:<password>@<cluster>.mongodb.net/campus_cart?retryWrites=true&w=majority`
+     - `JWT_SECRET` = `<strong 64+ character random string>`
+     - `JWT_EXPIRES_IN` = `7d`
+     - `COOKIE_SECURE` = `true`
+     - `COOKIE_SAME_SITE` = `lax`
 
 ---
 

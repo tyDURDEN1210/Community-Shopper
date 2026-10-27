@@ -1,13 +1,31 @@
 import mongoose from 'mongoose';
-import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import path from 'path';
 import { env } from './env.js';
 
-let replSet: MongoMemoryReplSet | null = null;
+interface ClosableReplSet {
+  getUri: (dbName?: string) => string;
+  stop: () => Promise<boolean>;
+}
+
+let replSet: ClosableReplSet | null = null;
 
 export async function connectDatabase(customUri?: string): Promise<string> {
   if (mongoose.connection.readyState === 1) {
     return mongoose.connection.host;
+  }
+
+  // Never allow MongoMemoryReplSet in production
+  if (env.IS_PRODUCTION) {
+    const prodUri = customUri || env.MONGODB_URI;
+    if (!prodUri || prodUri.trim() === '') {
+      throw new Error(
+        '[DB] MONGODB_URI is required in production. In-memory database fallback is disabled in production.'
+      );
+    }
+    await mongoose.connect(prodUri, {
+      serverSelectionTimeoutMS: 10000
+    });
+    return prodUri;
   }
 
   const shouldUseInMemory = env.USE_IN_MEMORY_DB && !customUri;
@@ -35,7 +53,12 @@ export async function connectDatabase(customUri?: string): Promise<string> {
 }
 
 export async function connectInMemoryReplicaSet(): Promise<string> {
+  if (env.IS_PRODUCTION) {
+    throw new Error('[DB] MongoMemoryReplSet is strictly forbidden in production.');
+  }
+
   if (!replSet) {
+    const { MongoMemoryReplSet } = await import('mongodb-memory-server');
     replSet = await MongoMemoryReplSet.create({
       replSet: {
         count: 1,
@@ -60,4 +83,3 @@ export async function disconnectDatabase(): Promise<void> {
     replSet = null;
   }
 }
-

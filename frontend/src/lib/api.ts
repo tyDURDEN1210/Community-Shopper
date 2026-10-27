@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+export const API_BASE_URL =
+  configuredBaseUrl && configuredBaseUrl.length > 0 ? configuredBaseUrl : '/api/v1';
 
 let memoryToken: string | null = localStorage.getItem('cc_token');
 
@@ -62,4 +64,3 @@ export async function apiRequest<T>(
 
   return payload.data as T;
 }
-

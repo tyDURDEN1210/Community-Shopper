@@ -1,16 +1,14 @@
 services:
   - type: web
-    name: campus-cart-backend
-    env: node
-    rootDir: backend
-    buildCommand: npm install && npm run build
+    name: campus-cart
+    runtime: node
+    plan: free
+    buildCommand: npm run install:all && npm run build
     startCommand: npm run start
     healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 5000
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
@@ -19,6 +17,5 @@ services:
         value: 7d
       - key: COOKIE_SECURE
         value: "true"
-      - key: CORS_ORIGIN
-        sync: false
-
+      - key: COOKIE_SAME_SITE
+        value: lax

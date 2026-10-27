@@ -9,7 +9,12 @@ function getSocket(): Socket | null {
     return null;
   }
   if (!sharedSocket) {
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+    const configuredSocketUrl = import.meta.env.VITE_SOCKET_URL?.trim();
+    const socketUrl =
+      configuredSocketUrl && configuredSocketUrl.length > 0
+        ? configuredSocketUrl
+        : window.location.origin;
+
     sharedSocket = io(socketUrl, {
       withCredentials: true,
       transports: ['websocket', 'polling'],
@@ -66,4 +71,3 @@ export function useOrderSocket(orderId?: string): void {
     };
   }, [orderId, queryClient]);
 }
-
